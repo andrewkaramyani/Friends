@@ -1,0 +1,77 @@
+﻿@model Friends.Models.ViewModel.ProfileViewmodel
+@inject Microsoft.AspNetCore.Identity.UserManager<Person> usermanger;
+@inject Microsoft.AspNetCore.Identity.SignInManager<Person> signInManager;
+
+@{
+    ViewData["Title"] = "Profile Page";
+}
+
+
+<div class="text-center">
+    <div class="x-4" style="color:brown">
+        <h4>
+            Name : @Model.person.FirstName
+            @Model.person.LastName
+        </h4>
+        <h4>Gender : @Model.person.Gender</h4>
+        <h4>City : @Model.person.City</h4>
+    </div>
+</div>
+@if (signInManager.IsSignedIn(User))
+{
+    var user = await usermanger.FindByEmailAsync(User.Identity.Name);
+    <form method="post" asp-controller="home" asp-action="post">
+        <div class="card m-3" style="min-width:18rem;  ">
+            <div class="card-header font-weight-bold">
+                @user.FirstName  @user.LastName
+            </div>
+            <div class="card-body">
+                <input asp-for="@Model.post.Body" class="form-control" style="height:70px"
+                       placeholder="What's in your mind ?!" />
+            </div>
+            <div class="card-footer text-center">
+                <button type="submit"
+                        class="btn btn-primary m-1">
+                    Post
+                </button>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Posts.Any())
+    {
+        @foreach (var post in Model.Posts)
+        {
+            <div class="card m-3" style="min-width:18rem;">
+                <div class="card-header font-weight-bold">
+                    <div>
+                        @post.User.FirstName
+                        @post.User.LastName
+                    </div>
+                    <div class="ml-auto">
+                        @post.CreationDate
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    @post.Body
+                </div>
+                <div class="card-footer text-center">
+                    <a asp-controller="home" asp-action="Like" asp-route-id="@post.ID"
+                       class="btn btn-primary m-1">@post.UserPostLikes.Count Like</a>
+                </div>
+            </div>
+        }
+    }
+
+}
+else
+{
+    <div class="card-body">
+        <h1 style="color:brown">Welcome To Friends Please Login</h1>
+    </div>
+}
+</div>
+
+
+
+
