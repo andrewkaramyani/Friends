@@ -13,5 +13,6 @@ namespace Friends.Models.ViewModel
         }
         public IEnumerable<Post> Posts { get; set; }
         public Post post { get; set; }
+        public UserPostComment userComment { get; set; }
     }
 }

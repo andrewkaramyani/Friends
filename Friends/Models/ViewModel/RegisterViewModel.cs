@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -37,5 +38,7 @@ namespace Friends.Models.ViewModel
         public string ConfirmPassword { get; set; }
 
         public string City { get; set; }
+
+        public IFormFile Photo { get; set; }
     }
 }

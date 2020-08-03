@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Friends.Models;
+using Friends.Models.Repository;
 using Friends.Models.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,16 +16,14 @@ namespace Friends.Controllers
     public class ProfileController : Controller
     {
         private readonly ILogger<ProfileController> _logger;
-        private readonly IPostRepository postRepository;
-        private readonly ILikeRepository likeRepository;
+        private readonly IRepositoryUnitWork unitWork;
         private readonly UserManager<Person> userManager;
 
-        public ProfileController(ILogger<ProfileController> logger, IPostRepository postRepository,
-            ILikeRepository likeRepository, UserManager<Person> userManager)
+        public ProfileController(ILogger<ProfileController> logger, IRepositoryUnitWork UnitWork,
+            UserManager<Person> userManager)
         {
             _logger = logger;
-            this.postRepository = postRepository;
-            this.likeRepository = likeRepository;
+            unitWork = UnitWork;
             this.userManager = userManager;
         }
 
@@ -35,9 +34,48 @@ namespace Friends.Controllers
             ProfileViewmodel profileViewmodel = new ProfileViewmodel()
             {
                 person = person,
-                Posts = postRepository.GetAllPostToPerson(id)
+                Posts = unitWork.GetAllPostToPerson(id)
             };
             return View(profileViewmodel);
+        }
+
+        public async Task<IActionResult> Like(int id)
+        {
+            Post post = unitWork.GetPostById(id);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            UserPostLike userPostLike = new UserPostLike()
+            {
+                Post = post,
+                PostID = id,
+                User = user,
+                UserID = user.Id.ToString()
+            };
+            unitWork.AddLike(userPostLike);
+            return RedirectToAction("GetProfile","Profile",new {id= user.Id });
+        }
+
+        public async Task<IActionResult> AddComment(string id, PostViewmodel model)
+        {
+            Post post = unitWork.GetPostById(int.Parse(id));
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+
+            UserPostComment userPostComment = new UserPostComment()
+            {
+                Post = post,
+                PostID = int.Parse(id),
+                User = user,
+                userID = user.Id
+            };
+            Comment comment = new Comment()
+            {
+                Body = model.userComment.Comment.Body,
+                State = Enums.CommentStatus.Active,
+                CreationDate = System.DateTime.Now,
+                UserPostComments = userPostComment
+            };
+            userPostComment.Comment = comment;
+            unitWork.AddComment(userPostComment);
+            return RedirectToAction("GetProfile", "Profile", new { id = user.Id });
         }
     }
 }

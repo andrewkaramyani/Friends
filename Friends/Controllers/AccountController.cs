@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Friends.Models;
 using Friends.Models.ViewModel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,12 +17,14 @@ namespace Friends.Controllers
     public class AccountController : Controller
     {
         private readonly UserManager<Person> userManager;
+        private readonly IWebHostEnvironment webHostEnvironment;
         private readonly SignInManager<Person> signInManager;
 
         public AccountController(UserManager<Person> userManager,
-               SignInManager<Person> signInManager)
+                IWebHostEnvironment webHostEnvironment, SignInManager<Person> signInManager)
         {
             this.userManager = userManager;
+            this.webHostEnvironment = webHostEnvironment;
             this.signInManager = signInManager;
         }
         // GET: /<controller>/
@@ -37,7 +41,9 @@ namespace Friends.Controllers
             if (ModelState.IsValid)
             {
                 var user = new Person {FirstName =model.FirstName, LastName=model.LastName,Gender=model.Gender,
-                   BirthDay=model.BirthDay, UserName = model.Email, Email = model.Email, City = model.City };
+                   BirthDay=model.BirthDay, UserName = model.Email, 
+                    Email = model.Email, City = model.City,PhotoPath = ProcessUploadFile(model)};
+               
                 var result = await userManager.CreateAsync(user, model.Password);
 
                 if (result.Succeeded)
@@ -112,6 +118,24 @@ namespace Friends.Controllers
             {
                 return Json($"This Email {email} in use");
             }
+        }
+
+        private string ProcessUploadFile(RegisterViewModel Model)
+        {
+            string uniquefile = null;
+            if (Model.Photo != null)
+            {
+                string uploadfolder = Path.Combine(webHostEnvironment.WebRootPath + "/images");
+                uniquefile = Guid.NewGuid().ToString() + "_" + Model.Photo.FileName;
+                string filepath = Path.Combine(uploadfolder, uniquefile);
+                using (var filestream = new FileStream(filepath, FileMode.Create))
+                {
+                    Model.Photo.CopyTo(filestream);
+                }
+
+            }
+
+            return uniquefile;
         }
     }
 }

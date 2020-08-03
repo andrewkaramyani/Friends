@@ -8,22 +8,21 @@ using Microsoft.Extensions.Logging;
 using Friends.Models;
 using Friends.Models.ViewModel;
 using Microsoft.AspNetCore.Identity;
+using Friends.Models.Repository;
 
 namespace Friends.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly IPostRepository postRepository;
-        private readonly ILikeRepository likeRepository;
+        private readonly IRepositoryUnitWork unitWork;
         private readonly UserManager<Person> userManager;
 
-        public HomeController(ILogger<HomeController> logger, IPostRepository postRepository,
-            ILikeRepository likeRepository , UserManager<Person> userManager)
+        public HomeController(ILogger<HomeController> logger, IRepositoryUnitWork unitWork
+             , UserManager<Person> userManager)
         {
             _logger = logger;
-            this.postRepository = postRepository;
-            this.likeRepository = likeRepository;
+            this.unitWork = unitWork;
             this.userManager = userManager;
         }
 
@@ -32,10 +31,10 @@ namespace Friends.Controllers
         {
             PostViewmodel postViewmodel = new PostViewmodel()
             {
-                Posts = postRepository.GetAllPost()
+                Posts = unitWork.GetAllPost()
             };
 
-            return View(postViewmodel); ;
+            return View(postViewmodel); 
         }
 
         public async Task<IActionResult> Post(PostViewmodel model)
@@ -47,13 +46,13 @@ namespace Friends.Controllers
                 CreationDate = System.DateTime.Now,
                 State = Enums.PostStatus.Active
             };
-            postRepository.Add(post);
+            unitWork.Add(post);
             return RedirectToAction("index", "home");
         }
 
         public async Task<IActionResult> Like(int id)
         {
-            Post post = postRepository.GetPostById(id);
+            Post post = unitWork.GetPostById(id);
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
             UserPostLike userPostLike = new UserPostLike()
             {
@@ -62,7 +61,31 @@ namespace Friends.Controllers
                 User = user,
                 UserID = user.Id.ToString()
             };
-            likeRepository.AddLike(userPostLike);
+            unitWork.AddLike(userPostLike);
+            return RedirectToAction("index", "home");
+        }
+
+        public async Task<IActionResult> AddComment(string id,PostViewmodel model)
+        {
+            Post post = unitWork.GetPostById(int.Parse(id));
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+          
+            UserPostComment userPostComment = new UserPostComment()
+            {
+                Post = post,
+                PostID = int.Parse(id),
+                User = user,
+                userID=user.Id
+            };
+            Comment comment = new Comment()
+            {
+                Body = model.userComment.Comment.Body,
+                State = Enums.CommentStatus.Active,
+                CreationDate = System.DateTime.Now,
+                UserPostComments = userPostComment
+            };
+            userPostComment.Comment = comment;
+            unitWork.AddComment(userPostComment);
             return RedirectToAction("index", "home");
         }
 

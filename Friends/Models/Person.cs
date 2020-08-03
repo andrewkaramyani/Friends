@@ -51,5 +51,7 @@ namespace Friends.Models
         public virtual List<Post> Posts { get; set; }
         public virtual List<UserPostLike> UserPostLikes { get; set; }
         public virtual List<UserPostComment> UserPostComments { get; set; }
+
+        public string PhotoPath { get; set; }
     }
 }

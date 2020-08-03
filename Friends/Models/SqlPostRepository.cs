@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Friends.Models
 {
-    public class SqlPostRepository : IPostRepository, IRpositoryComment, ILikeRepository
+    public class SqlPostRepository : IRepositoryUnitWork
     {
         private readonly AppDbContext Context;
 
@@ -40,7 +40,7 @@ namespace Friends.Models
         public IEnumerable<Post> GetAllPost()
         {
             return Context.Posts.Include(u => u.User).Include(L => L.UserPostLikes).
-                Include(C => C.UserPostComments).OrderByDescending(d=>d.CreationDate);
+                Include(C => C.UserPostComments).ThenInclude(c=>c.Comment).OrderByDescending(d=>d.CreationDate);
         }
 
         public Post GetPostById(int id)
@@ -63,11 +63,11 @@ namespace Friends.Models
         #region Comment
 
 
-        public Comment Add(Comment comment)
+        public UserPostComment AddComment(UserPostComment usercomment)
         {
-            Context.Comments.Add(comment);
+            Context.UserPostComments.Add(usercomment);
             Context.SaveChanges();
-            return comment;
+            return usercomment;
         }
 
 
@@ -93,7 +93,7 @@ namespace Friends.Models
             return comment;
         }
 
-        Comment IRpositoryComment.Delete(int id)
+        Comment IRepositoryUnitWork.DeleteComment(int id)
         {
             Comment comment = Context.Comments.Find(id);
             if (comment != null)
@@ -138,9 +138,13 @@ namespace Friends.Models
 
         public IEnumerable<Post> GetAllPostToPerson(string id)
         {
-            return Context.Posts.Where(p => p.User.Id == id).Include(u => u.User).Include(L => L.UserPostLikes).
-                Include(C => C.UserPostComments).OrderByDescending(d => d.CreationDate);
+            return Context.Posts.Where(p => p.User.Id == id).Include(u => u.User).Include(L => L.UserPostLikes).ThenInclude(l=>l.User).
+                Include(C => C.UserPostComments).ThenInclude(c=>c.Comment).OrderByDescending(d => d.CreationDate);
         }
+
+      
+
+
         #endregion
     }
 }

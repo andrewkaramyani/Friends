@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Friends.Models;
+using Friends.Models.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -31,8 +32,8 @@ namespace Friends
                                      options.UseSqlServer(Configuration.GetConnectionString("FriendsConnectionstring")));
             services.AddIdentity<Person, IdentityRole>().
                 AddEntityFrameworkStores<AppDbContext>();
-            services.AddScoped<IPostRepository, SqlPostRepository>();
-            services.AddScoped<ILikeRepository, SqlPostRepository>();
+            services.AddScoped<IRepositoryUnitWork, SqlPostRepository>();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
